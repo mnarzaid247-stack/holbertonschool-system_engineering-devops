@@ -1,0 +1,68 @@
+# Application Server vs Web Server
+
+## Infrastructure Design
+
+This infrastructure hosts the website **[www.foobar.com](http://www.foobar.com)** using a more scalable and reliable setup.
+
+```text
+User Browser
+     |
+     v
+DNS: www.foobar.com
+     |
+     v
+Firewall
+     |
+     v
+HAProxy Load Balancer 1  <---- cluster ---->  HAProxy Load Balancer 2
+     |
+     v
+Web Server
+Nginx
+     |
+     v
+Application Server
+Application Code Base
+     |
+     v
+Database Server
+MySQL
+```
+
+## Explanation
+
+A user wants to access **[www.foobar.com](http://www.foobar.com)**. The browser resolves the domain name using DNS, then sends the request to the load balancer.
+
+We add **one extra server** to improve the infrastructure and separate responsibilities. Instead of placing all components on the same machines, each major component now has its own server.
+
+We add another **HAProxy load balancer** and configure it as a cluster with the existing load balancer. This removes the load balancer as a single point of failure. If one load balancer fails, the other one can continue receiving traffic.
+
+We split the components into separate servers:
+
+The **web server** runs **Nginx**. Its job is to receive HTTP/HTTPS requests, serve static files, and forward dynamic requests to the application server.
+
+The **application server** runs the backend application logic. It processes user requests, executes business logic, and communicates with the database when needed.
+
+The **database server** runs **MySQL**. It stores persistent data such as users, posts, sessions, orders, or any information that must be saved.
+
+## Web Server vs Application Server
+
+A **web server** mainly handles client requests and responses. It serves static content like HTML, CSS, JavaScript, and images. It can also act as a reverse proxy and forward requests to the application server.
+
+An **application server** runs the actual backend code. It handles dynamic logic, authentication, validation, calculations, database queries, and API responses.
+
+In simple terms:
+
+```text
+Web Server = receives requests and serves/forwards them
+Application Server = runs the application logic
+Database Server = stores the data
+```
+
+## Why This Design Is Better
+
+This design is better because each server has a clear responsibility. It is easier to scale, easier to maintain, and more reliable.
+
+If traffic increases, we can add more web servers or application servers. If the database becomes slow, we can improve the database server separately.
+
+This separation also improves security because each server can have specific firewall rules and access permissions.

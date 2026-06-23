@@ -1,0 +1,41 @@
+A user wants to visit our website by typing www.foobar.com in the browser. First, the browser asks DNS to translate this domain name into an IP address. The domain foobar.com has a www DNS record that points to the server IP address 8.8.8.8. In this case, www is usually a CNAME record pointing to foobar.com, or sometimes an A record pointing directly to 8.8.8.8.
+
+After DNS returns the IP address, the user’s browser sends an HTTP or HTTPS request to the server. The server is a physical or virtual machine that provides services over the network. In this infrastructure, we only have one server, and it contains everything: Nginx, the application server, the application files, and the MySQL database.
+
+Nginx is the web server. Its role is to receive requests from users, serve static files like images, CSS, and JavaScript, and forward dynamic requests to the application server.
+
+The application server runs the backend logic of the website. It processes requests, runs the application code, handles business logic, and communicates with the database when needed.
+
+The application files are the actual code base of the website, such as backend code, frontend files, configuration files, and templates.
+
+The MySQL database stores the website data, such as users, posts, products, orders, or any other persistent information.
+
+The server communicates with the user’s computer using the TCP/IP protocol, usually through HTTP or HTTPS.
+
+The main issues with this infrastructure are:
+
+SPOF — Single Point of Failure:
+Because everything is on one server, if the server goes down, the whole website goes down.
+
+Downtime during maintenance:
+If we need to deploy new code, restart Nginx, restart the app server, or update the database, the website may become unavailable.
+
+Cannot scale well:
+If too many users visit the website at the same time, this one server may not handle all the traffic. There is no load balancer, no replica server, and no separate database server.
+
+Simple whiteboard layout:
+
+User Browser
+     |
+     | www.foobar.com
+     v
+DNS resolves www.foobar.com -> 8.8.8.8
+     |
+     v
+Server 8.8.8.8
+------------------------------------------------
+| Nginx Web Server                             |
+| Application Server                           |
+| Application Files / Code Base                |
+| MySQL Database                               |
+------------------------------------------------

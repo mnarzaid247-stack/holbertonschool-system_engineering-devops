@@ -1,0 +1,38 @@
+A user wants to access the website by typing **[www.foobar.com](http://www.foobar.com)** in the browser. DNS resolves **[www.foobar.com](http://www.foobar.com)** to the public IP address of the load balancer. The user’s request first reaches the **HAProxy load balancer**, then HAProxy forwards the request to one of the two backend servers.
+
+```text
+User Browser
+     |
+     | www.foobar.com
+     v
+DNS
+     |
+     v
+HAProxy Load Balancer
+     |
+     |-----------------------------|
+     v                             v
+Server 1                       Server 2
+Nginx                          Nginx
+Application Server             Application Server
+Application Files              Application Files
+MySQL Primary                  MySQL Replica
+```
+
+We add **HAProxy** to distribute incoming traffic between the two servers. This improves availability and performance because requests are not handled by only one server.
+
+Each server has **Nginx**, an **application server**, **application files**, and **MySQL**. Nginx receives HTTP requests and forwards dynamic requests to the application server. The application server runs the backend logic. The application files are the code base of the website. MySQL stores persistent data.
+
+The load balancer can use the **Round Robin** distribution algorithm. With Round Robin, HAProxy sends the first request to Server 1, the second request to Server 2, then repeats the cycle. This spreads traffic evenly between the servers.
+
+This setup is **Active-Active** because both servers are running and receiving traffic at the same time. In an **Active-Passive** setup, one server handles traffic while the other waits as a backup and is only used if the active server fails.
+
+The database uses a **Primary-Replica** setup. The **Primary** database handles write operations such as creating, updating, and deleting data. The **Replica** database copies data from the Primary and can be used for read operations. The application must send writes to the Primary node. Reads can be sent to the Replica node if the application is configured to support that.
+
+The main issues with this infrastructure are:
+
+**SPOF:** The load balancer is still a single point of failure. If HAProxy goes down, users cannot reach the website. The Primary database can also be a single point of failure for write operations.
+
+**Security issues:** There is no firewall, so services may be exposed directly to the internet. There is also no HTTPS, which means traffic is not encrypted.
+
+**No monitoring:** There is no monitoring system to track server health, traffic, errors, database status, or downtime. If something fails, the team may not know immediately.

@@ -1,0 +1,47 @@
+A user wants to access **[www.foobar.com](http://www.foobar.com)**. The browser resolves the domain through DNS, then sends an HTTPS request to the public IP address of the load balancer.
+
+```text
+User Browser
+     |
+ HTTPS request to www.foobar.com
+     |
+ [Firewall 1]
+     |
+ HAProxy Load Balancer
+ SSL Certificate installed here
+     |
+ -------------------------------
+ |                             |
+[Firewall 2]                  [Firewall 3]
+ |                             |
+Server 1                     Server 2
+Nginx                        Nginx
+Application Server           Application Server
+Application Files            Application Files
+MySQL Primary                MySQL Replica
+Monitoring Client            Monitoring Client
+
+Load Balancer also has:
+Monitoring Client
+```
+
+We add **3 firewalls** to control network traffic. A firewall filters incoming and outgoing traffic based on rules. It helps block unauthorized access and only allows required traffic, such as HTTPS traffic from users and internal traffic between the load balancer and the servers.
+
+We add an **SSL certificate** so the website can be served over **HTTPS**. HTTPS encrypts the traffic between the user’s browser and the website. This protects sensitive data such as passwords, cookies, and personal information from being read or modified during transmission.
+
+We add **3 monitoring clients**, one on each machine: the load balancer, Server 1, and Server 2. Monitoring is used to collect metrics, logs, and alerts. It helps the team know if a server is down, if traffic is too high, if errors are increasing, or if the database is having issues.
+
+The monitoring client collects data from the machine, such as CPU usage, memory usage, disk usage, network traffic, Nginx logs, HAProxy logs, application logs, and MySQL metrics. Then it sends this data to a monitoring service such as Sumologic.
+
+To monitor the web server **QPS**, which means queries per second, we need to collect request metrics from Nginx. This can be done by enabling Nginx status metrics or parsing Nginx access logs. The monitoring client sends those request counts to the monitoring system, and we create a dashboard or alert for requests per second.
+
+The main issues with this infrastructure are:
+
+**SSL termination at the load balancer level:**
+If HTTPS is terminated at HAProxy, the traffic between the load balancer and the backend servers may become unencrypted HTTP. This is a security risk if the internal network is compromised. A better setup is to re-encrypt traffic from the load balancer to the backend servers.
+
+**Only one MySQL server accepts writes:**
+The Primary database is the only node that can handle write operations. If it fails, the application cannot create, update, or delete data until failover happens. This makes the Primary database a bottleneck and a single point of failure for writes.
+
+**All servers have the same components:**
+Having the database, web server, and application server on the same machines can cause resource competition. For example, MySQL may consume CPU, RAM, and disk I/O needed by the application server. It also makes scaling harder because web traffic and database load usually need different scaling strategies. A better design is to separate web/application servers from database servers.
